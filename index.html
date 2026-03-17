@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    
+    <!-- Primary Meta Tags -->
+    <title>English AI Learning Platform - Learn English with AI</title>
+    <meta name="title" content="English AI Learning Platform - Learn English with AI" />
+    <meta name="description" content="Master English pronunciation and conversation with AI-powered lessons. Practice speaking, listening, and improve your fluency with personalized feedback." />
+    
+    <!-- PWA Meta Tags -->
+    <meta name="theme-color" content="#22c55e" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="English AI" />
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="/manifest.json" />
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <link rel="apple-touch-icon" href="/icons/icon-192x192.png" />
+    
+    <!-- iOS Splash Screens -->
+    <link rel="apple-touch-startup-image" href="/icons/icon-512x512.png" />
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="English AI Learning Platform" />
+    <meta property="og:description" content="Learn English with AI-powered pronunciation practice and conversation" />
+    <meta property="og:image" content="/icons/icon-512x512.png" />
+    
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image" />
+    <meta property="twitter:title" content="English AI Learning Platform" />
+    <meta property="twitter:description" content="Learn English with AI-powered pronunciation practice and conversation" />
+    <meta property="twitter:image" content="/icons/icon-512x512.png" />
+    
+    <!-- Preconnect for performance -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  </head>
+  <body>
+    <!-- Skip to main content (Accessibility) -->
+    <a href="#main-content" class="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:bg-green-500 focus:text-white focus:px-4 focus:py-2 focus:rounded-lg">
+      Skip to main content
+    </a>
+    
+    <!-- Main App Container -->
+    <div id="root"></div>
+    
+    <!-- Main content landmark -->
+    <main id="main-content" class="sr-only"></main>
+    
+    <!-- No JavaScript Warning -->
+    <noscript>
+      <div style="padding: 2rem; text-align: center; background: #fef2f2; border: 2px solid #ef4444; margin: 2rem; border-radius: 0.5rem;">
+        <h1 style="color: #dc2626; margin-bottom: 1rem;">JavaScript Required</h1>
+        <p style="color: #991b1b;">This application requires JavaScript to run. Please enable JavaScript in your browser settings.</p>
+      </div>
+    </noscript>
+    
+    <!-- Vite Entry Point -->
+    <script type="module" src="/src/main.tsx"></script>
+    <!-- PWA: Service worker được đăng ký trong app (src/utils/pwa.ts) để tránh đăng ký trong dev -->
+  </body>
+</html>

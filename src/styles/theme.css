@@ -1,0 +1,331 @@
+@custom-variant dark (&:is(.dark *));
+
+:root {
+  --font-size: 16px;
+
+  /* Focused, modern light background (admin-friendly) */
+  --background: #f4f6f8;
+  --foreground: #212121;
+
+  --card: #ffffff;
+  --card-foreground: #1e293b;
+
+  --popover: #ffffff;
+  --popover-foreground: #1e293b;
+
+  /* Primary - professional blue */
+  --primary: #3f51b5;
+  --primary-foreground: #ffffff;
+  --primary-hover: #303f9f;
+
+  /* Secondary - Slate */
+  --secondary: #f1f5f9;
+  --secondary-foreground: #334155;
+
+  /* Muted */
+  --muted: #f1f5f9;
+  --muted-foreground: #64748b;
+
+  /* Accent - Violet tint */
+  --accent: #f5f3ff;
+  --accent-foreground: #7c3aed;
+
+  /* Success */
+  --success: #388e3c;
+  --success-foreground: #ffffff;
+
+  /* Warning */
+  --warning: #f59e0b;
+  --warning-foreground: #1e293b;
+
+  /* Destructive */
+  --destructive: #ef5350;
+  --destructive-foreground: #ffffff;
+
+  /* Borders and inputs */
+  --border: #e2e8f0;
+  --input: transparent;
+  --input-background: #f1f5f9;
+  --switch-background: #e2e8f0;
+
+  --font-weight-medium: 500;
+  --font-weight-normal: 400;
+
+  --ring: #3f51b5;
+
+  /* Rounded */
+  --radius: 0.75rem;
+
+  /* Chart */
+  --chart-1: #7c3aed;
+  --chart-2: #10b981;
+  --chart-3: #f59e0b;
+  --chart-4: #6366f1;
+  --chart-5: #ec4899;
+
+  /* Sidebar */
+  --sidebar: #ffffff;
+  --sidebar-foreground: #424242;
+  --sidebar-primary: #3f51b5;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #e8eaf6;
+  --sidebar-accent-foreground: #303f9f;
+  --sidebar-border: #d0d7de;
+  --sidebar-ring: #3f51b5;
+}
+
+.dark {
+  --background: #0f1115;
+  --foreground: #f1f5f9;
+
+  --card: #1a1d24;
+  --card-foreground: #f1f5f9;
+
+  --popover: #1a1d24;
+  --popover-foreground: #f1f5f9;
+
+  --primary: #8b5cf6;
+  --primary-foreground: #ffffff;
+  --primary-hover: #7c3aed;
+
+  --secondary: #1e293b;
+  --secondary-foreground: #e2e8f0;
+
+  --muted: #1e293b;
+  --muted-foreground: #94a3b8;
+
+  --accent: #2e1065;
+  --accent-foreground: #a78bfa;
+
+  --success: #10b981;
+  --success-foreground: #ffffff;
+
+  --warning: #f59e0b;
+  --warning-foreground: #0f1115;
+
+  --destructive: #ef4444;
+  --destructive-foreground: #ffffff;
+
+  --border: #334155;
+  --input: #334155;
+  --ring: #8b5cf6;
+
+  --chart-1: #8b5cf6;
+  --chart-2: #10b981;
+  --chart-3: #f59e0b;
+  --chart-4: #6366f1;
+  --chart-5: #ec4899;
+
+  --sidebar: #0f1115;
+  --sidebar-foreground: #e2e8f0;
+  --sidebar-primary: #8b5cf6;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #1e293b;
+  --sidebar-accent-foreground: #a78bfa;
+  --sidebar-border: #334155;
+  --sidebar-ring: #8b5cf6;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary-hover: var(--primary-hover);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-input-background: var(--input-background);
+  --color-switch-background: var(--switch-background);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  
+  /* Larger rounded corners for friendly feel */
+  --radius-sm: calc(var(--radius) - 0.25rem);
+  --radius-md: var(--radius);
+  --radius-lg: calc(var(--radius) + 0.25rem);
+  --radius-xl: calc(var(--radius) + 0.5rem);
+  
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+    letter-spacing: -0.01em; /* Improved letter spacing for Inter */
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    letter-spacing: -0.011em;
+    line-height: 1.6; /* Better readability */
+  }
+
+  /**
+  * Default typography styles for HTML elements (h1-h4, p, label, button, input).
+  * These are in @layer base, so Tailwind utility classes (like text-sm, text-lg) automatically override them.
+  */
+
+  html {
+    font-size: var(--font-size);
+  }
+
+  h1 {
+    font-size: var(--text-2xl);
+    font-weight: 700; /* Bolder for Inter */
+    line-height: 1.2;
+    letter-spacing: -0.025em;
+  }
+
+  h2 {
+    font-size: var(--text-xl);
+    font-weight: 600;
+    line-height: 1.3;
+    letter-spacing: -0.02em;
+  }
+
+  h3 {
+    font-size: var(--text-lg);
+    font-weight: 600;
+    line-height: 1.4;
+    letter-spacing: -0.015em;
+  }
+
+  h4 {
+    font-size: var(--text-base);
+    font-weight: 600;
+    line-height: 1.5;
+    letter-spacing: -0.01em;
+  }
+
+  p {
+    line-height: 1.6;
+    letter-spacing: -0.011em;
+  }
+
+  label {
+    font-size: var(--text-base);
+    font-weight: 500;
+    line-height: 1.5;
+    letter-spacing: -0.01em;
+  }
+
+  button {
+    font-size: var(--text-base);
+    font-weight: 500;
+    line-height: 1.5;
+    letter-spacing: -0.01em;
+  }
+
+  input {
+    font-size: var(--text-base);
+    font-weight: var(--font-weight-normal);
+    line-height: 1.5;
+    letter-spacing: -0.011em;
+  }
+}
+
+/* Page background theme (data-theme-bg) - tuỳ chỉnh màu nền */
+/* Header & Sidebar dùng chung với page-bg để đồng bộ khi đổi theme */
+[data-theme-bg="slate"] {
+  --page-bg: #f8fafc;
+  --header-bg: #f8fafc;
+  --sidebar-bg: #F8F9FA;
+}
+.dark [data-theme-bg="slate"] {
+  --page-bg: #0f1115;
+  --header-bg: #0f1115;
+  --sidebar-bg: #0f1115;
+}
+
+[data-theme-bg="warm"] {
+  --page-bg: #fef7ed;
+  --header-bg: #fef7ed;
+  --sidebar-bg: #fef3e2;
+}
+.dark [data-theme-bg="warm"] {
+  --page-bg: #1c1917;
+  --header-bg: #1c1917;
+  --sidebar-bg: #1c1917;
+}
+
+[data-theme-bg="blue"] {
+  --page-bg: #f0f9ff;
+  --header-bg: #f0f9ff;
+  --sidebar-bg: #e0f2fe;
+}
+.dark [data-theme-bg="blue"] {
+  --page-bg: #0c1929;
+  --header-bg: #0c1929;
+  --sidebar-bg: #0c1929;
+}
+
+[data-theme-bg="green"] {
+  --page-bg: #f0fdf4;
+  --header-bg: #f0fdf4;
+  --sidebar-bg: #dcfce7;
+}
+.dark [data-theme-bg="green"] {
+  --page-bg: #0d1f12;
+  --header-bg: #0d1f12;
+  --sidebar-bg: #0d1f12;
+}
+
+[data-theme-bg="violet"] {
+  --page-bg: #faf5ff;
+  --header-bg: #faf5ff;
+  --sidebar-bg: #f3e8ff;
+}
+.dark [data-theme-bg="violet"] {
+  --page-bg: #1a1625;
+  --header-bg: #1a1625;
+  --sidebar-bg: #1a1625;
+}
+
+[data-theme-bg="rose"] {
+  --page-bg: #fff1f2;
+  --header-bg: #fff1f2;
+  --sidebar-bg: #ffe4e6;
+}
+.dark [data-theme-bg="rose"] {
+  --page-bg: #1f1315;
+  --header-bg: #1f1315;
+  --sidebar-bg: #1f1315;
+}
+
+[data-theme-bg="dark"] {
+  --page-bg: #e2e8f0;
+  --header-bg: #e2e8f0;
+  --sidebar-bg: #cbd5e1;
+}
+.dark [data-theme-bg="dark"] {
+  --page-bg: #0a0a0b;
+  --header-bg: #0a0a0b;
+  --sidebar-bg: #0a0a0b;
+}

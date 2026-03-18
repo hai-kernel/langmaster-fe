@@ -34,6 +34,7 @@ export function CreateLessonModal({ open, onOpenChange, onSuccess }: CreateLesso
 
   const [youtubeInputUrl, setYoutubeInputUrl] = useState('');
   const [scriptText, setScriptText] = useState('');
+  const [scriptView, setScriptView] = useState<'preview' | 'json'>('preview');
   const [videoUrl, setVideoUrl] = useState('');
   const [videoTab, setVideoTab] = useState<'youtube' | 'upload'>('youtube');
   const [uploadFile, setUploadFile] = useState<File | null>(null);
@@ -58,6 +59,7 @@ export function CreateLessonModal({ open, onOpenChange, onSuccess }: CreateLesso
       setUploadFile(null);
       setUploadStatus('idle');
       setAnalyzeStatus('idle');
+      setScriptView('preview');
       const teacherId = useAuthStore.getState().user?.id;
       Promise.all([
         teacherId ? apiService.curriculum.getByTeacher(String(teacherId)) : Promise.resolve({ data: { data: [] } }),
@@ -532,32 +534,93 @@ export function CreateLessonModal({ open, onOpenChange, onSuccess }: CreateLesso
                 {scriptText && (
                   (() => {
                     let count = 0;
+                    let transcriptItems: any[] = [];
                     try {
-                      count = JSON.parse(scriptText).length;
+                      transcriptItems = JSON.parse(scriptText);
+                      count = Array.isArray(transcriptItems) ? transcriptItems.length : 0;
                     } catch {
                       /* ignore */
                     }
                     return (
-                      <div className="border-t border-blue-100 dark:border-blue-900 pt-2">
-                        <div className="flex items-center justify-between mb-1">
-                          <span className="text-xs font-medium text-gray-700 dark:text-gray-300">
-                            ✅ Script ({count} câu) — có thể chỉnh sửa thủ công
-                          </span>
-                          <button
-                            type="button"
-                            onClick={() => setScriptText('')}
-                            className="text-xs text-red-400 hover:text-red-600"
-                          >
-                            Xóa
-                          </button>
+                      <div className="border-t border-blue-100 dark:border-blue-900 pt-3">
+                        <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs font-semibold text-gray-700 dark:text-gray-200">
+                              ✅ Script ({count} câu)
+                            </span>
+                            <span className="text-[11px] text-gray-500">Tự động phân tích & dịch</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <div className="flex rounded-md border border-gray-200 dark:border-gray-700 overflow-hidden text-xs">
+                              <button
+                                type="button"
+                                onClick={() => setScriptView('preview')}
+                                className={`px-2 py-1 ${scriptView === 'preview' ? 'bg-blue-600 text-white' : 'bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-300'}`}
+                              >
+                                Xem đẹp
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setScriptView('json')}
+                                className={`px-2 py-1 border-l border-gray-200 dark:border-gray-700 ${scriptView === 'json' ? 'bg-blue-600 text-white' : 'bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-300'}`}
+                              >
+                                JSON
+                              </button>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => setScriptText('')}
+                              className="text-xs text-red-400 hover:text-red-600"
+                            >
+                              Xóa
+                            </button>
+                          </div>
                         </div>
-                        <textarea
-                          value={scriptText}
-                          onChange={(e) => setScriptText(e.target.value)}
-                          className="w-full rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 p-2 text-xs font-mono resize-none"
-                          rows={4}
-                          spellCheck={false}
-                        />
+
+                        {scriptView === 'preview' && (
+                          <div className="space-y-2">
+                            {Array.isArray(transcriptItems) && transcriptItems.length > 0 ? (
+                              transcriptItems.map((item: any, index: number) => (
+                                <div
+                                  key={item?.sentenceIndex ?? `${item?.start ?? index}-${index}`}
+                                  className="rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-2"
+                                >
+                                  <div className="flex flex-wrap items-center gap-2 text-[11px] text-gray-500 dark:text-gray-400">
+                                    <span className="px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-300">
+                                      Câu {item?.sentenceIndex ?? index + 1}
+                                    </span>
+                                    <span>{item?.start ?? 0}ms → {item?.end ?? 0}ms</span>
+                                  </div>
+                                  <div className="mt-1 text-sm font-semibold text-gray-800 dark:text-gray-100">
+                                    {item?.text ?? ''}
+                                  </div>
+                                  {item?.viText && (
+                                    <div className="mt-1 text-xs text-gray-600 dark:text-gray-300">
+                                      {item?.viText}
+                                    </div>
+                                  )}
+                                  {item?.ipa && (
+                                    <div className="mt-1 text-[11px] text-gray-500 italic">
+                                      /{item.ipa}/
+                                    </div>
+                                  )}
+                                </div>
+                              ))
+                            ) : (
+                              <div className="text-xs text-gray-500">Không đọc được dữ liệu script.</div>
+                            )}
+                          </div>
+                        )}
+
+                        {scriptView === 'json' && (
+                          <textarea
+                            value={scriptText}
+                            onChange={(e) => setScriptText(e.target.value)}
+                            className="w-full rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 p-2 text-xs font-mono resize-none"
+                            rows={6}
+                            spellCheck={false}
+                          />
+                        )}
                       </div>
                     );
                   })()

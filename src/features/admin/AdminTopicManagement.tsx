@@ -141,6 +141,7 @@ export default function AdminTopicManagement() {
   // Video fields (only for VIDEO type lessons)
   const [videoUrl, setVideoUrl] = useState('');
   const [scriptText, setScriptText] = useState('');
+  const [scriptView, setScriptView] = useState<'preview' | 'json'>('preview');
   const [savingVideo, setSavingVideo] = useState(false);
 
   // YouTube analyze flow
@@ -852,7 +853,7 @@ export default function AdminTopicManagement() {
           <DialogHeader>
             <DialogTitle>{editingTopic ? 'Chỉnh sửa chủ đề' : 'Tạo chủ đề mới'}</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4 mt-2">
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 mt-2">
             <div>
               <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Tên chủ đề *</label>
               <Input
@@ -918,7 +919,7 @@ export default function AdminTopicManagement() {
                 className="mt-1"
               />
             </div>
-            <div className="flex justify-end gap-2 pt-2">
+            <div className="flex justify-end gap-2 pt-1">
               <Button variant="outline" onClick={() => setTopicDialog(false)} disabled={saving}>Hủy</Button>
               <Button onClick={saveTopic} disabled={!topicForm.name.trim() || saving}>
                 {saving ? 'Đang lưu...' : editingTopic ? 'Cập nhật' : 'Tạo chủ đề'}
@@ -934,7 +935,7 @@ export default function AdminTopicManagement() {
           <DialogHeader>
             <DialogTitle>Chỉnh sửa session</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4 mt-2">
+          <div className="grid grid-cols-1 xl:grid-cols-[1fr_1fr] gap-6 mt-2">
             <div>
               <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Tên session *</label>
               <Input
@@ -964,223 +965,297 @@ export default function AdminTopicManagement() {
 
       {/* Lesson Dialog */}
       <Dialog open={lessonDialog} onOpenChange={(open) => { if (!open) { stopPolling(); setAnalyzeStatus('idle'); setUploadStatus('idle'); setUploadFile(null); } setLessonDialog(open); }}>
-        <DialogContent className="max-w-lg" aria-describedby={undefined}>
+        <DialogContent className="w-[95vw] max-w-none max-h-[82vh] overflow-y-auto" aria-describedby={undefined}>
           <DialogHeader>
             <DialogTitle>
               {editingLesson ? `Chỉnh sửa: ${editingLesson.title}` : `Thêm bài học vào "${selectedSessionForLesson?.title}"`}
             </DialogTitle>
           </DialogHeader>
-          <div className="space-y-4 mt-2">
-            <div>
-              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Tên bài học *</label>
-              <Input value={lessonForm.title} onChange={(e) => setLessonForm({ ...lessonForm, title: e.target.value })} placeholder="VD: Từ vựng gọi món..." className="mt-1" />
-            </div>
-            <div>
-              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Mô tả</label>
-              <Input value={lessonForm.description} onChange={(e) => setLessonForm({ ...lessonForm, description: e.target.value })} placeholder="Mô tả ngắn..." className="mt-1" />
-            </div>
-            <div>
-              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Loại bài học</label>
-              <Select value={lessonForm.type} onValueChange={(v) => setLessonForm({ ...lessonForm, type: v })}>
-                <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {LESSON_TYPE_OPTIONS.map((o) => (
-                    <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 xl:grid-cols-[1fr_1fr] gap-6 mt-2">
+            <div className="space-y-4">
               <div>
-                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Thời gian (phút)</label>
-                <Input type="number" value={lessonForm.durationMinutes} onChange={(e) => setLessonForm({ ...lessonForm, durationMinutes: Number(e.target.value) })} className="mt-1" min={1} />
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Tên bài học *</label>
+                <Input value={lessonForm.title} onChange={(e) => setLessonForm({ ...lessonForm, title: e.target.value })} placeholder="VD: Từ vựng gọi món..." className="mt-1" />
               </div>
               <div>
-                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Thứ tự</label>
-                <Input type="number" value={lessonForm.orderIndex} onChange={(e) => setLessonForm({ ...lessonForm, orderIndex: Number(e.target.value) })} className="mt-1" min={1} />
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Mô tả</label>
+                <Input value={lessonForm.description} onChange={(e) => setLessonForm({ ...lessonForm, description: e.target.value })} placeholder="Mô tả ngắn..." className="mt-1" />
               </div>
-            </div>
-
-            {/* Video fields - only show when type is VIDEO */}
-            {lessonForm.type === 'VIDEO' && (
-              <div className="border rounded-lg overflow-hidden bg-blue-50 dark:bg-blue-950/30">
-                {/* Header */}
-                <div className="px-3 py-2 flex items-center gap-2 border-b border-blue-100 dark:border-blue-900">
-                  <Video className="w-3 h-3 text-blue-600" />
-                  <span className="text-xs font-semibold text-blue-700 dark:text-blue-300">Nội dung Video</span>
-                  {!editingLesson && (
-                    <span className="ml-auto text-xs text-amber-600 bg-amber-50 rounded px-1.5 py-0.5">
-                      ⚠ Lưu bài học trước, rồi chỉnh sửa để phân tích
-                    </span>
-                  )}
+              <div>
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Loại bài học</label>
+                <Select value={lessonForm.type} onValueChange={(v) => setLessonForm({ ...lessonForm, type: v })}>
+                  <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {LESSON_TYPE_OPTIONS.map((o) => (
+                      <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Thời gian (phút)</label>
+                  <Input type="number" value={lessonForm.durationMinutes} onChange={(e) => setLessonForm({ ...lessonForm, durationMinutes: Number(e.target.value) })} className="mt-1" min={1} />
                 </div>
-
-                {/* Tabs */}
-                <div className="flex border-b border-blue-100 dark:border-blue-900">
-                  <button
-                    onClick={() => setVideoTab('youtube')}
-                    className={`flex-1 py-2 text-xs font-medium flex items-center justify-center gap-1.5 transition-colors ${
-                      videoTab === 'youtube'
-                        ? 'bg-white dark:bg-gray-900 text-red-600 border-b-2 border-red-500'
-                        : 'text-gray-500 hover:text-gray-700 hover:bg-white/50'
-                    }`}
-                  >
-                    ▶ YouTube URL
-                  </button>
-                  <button
-                    onClick={() => setVideoTab('upload')}
-                    className={`flex-1 py-2 text-xs font-medium flex items-center justify-center gap-1.5 transition-colors ${
-                      videoTab === 'upload'
-                        ? 'bg-white dark:bg-gray-900 text-blue-600 border-b-2 border-blue-500'
-                        : 'text-gray-500 hover:text-gray-700 hover:bg-white/50'
-                    }`}
-                  >
-                    ⬆ Upload từ máy
-                  </button>
+                <div>
+                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Thứ tự</label>
+                  <Input type="number" value={lessonForm.orderIndex} onChange={(e) => setLessonForm({ ...lessonForm, orderIndex: Number(e.target.value) })} className="mt-1" min={1} />
                 </div>
+              </div>
 
-                <div className="p-3 space-y-3">
-                  {/* Tab 1: YouTube */}
-                  {videoTab === 'youtube' && (
-                    <div className="space-y-2">
-                      <p className="text-xs text-gray-500">
-                        Dán URL YouTube → hệ thống tự tải audio, AWS Transcribe, dịch VI, tạo IPA.
-                      </p>
-                      <div className="flex gap-2">
-                        <Input
-                          value={youtubeInputUrl}
-                          onChange={(e) => setYoutubeInputUrl(e.target.value)}
-                          placeholder="https://youtube.com/watch?v=..."
-                          className="flex-1 font-mono text-xs bg-white dark:bg-gray-900"
-                          disabled={analyzeStatus === 'submitting' || analyzeStatus === 'processing'}
-                        />
-                        <Button
-                          size="sm"
-                          onClick={() => editingLesson && analyzeYoutube(editingLesson.id)}
-                          disabled={!youtubeInputUrl.trim() || !editingLesson || analyzeStatus === 'submitting' || analyzeStatus === 'processing'}
-                          className="flex-shrink-0 bg-red-600 hover:bg-red-700 text-white text-xs gap-1"
-                        >
-                          {analyzeStatus === 'submitting' || analyzeStatus === 'processing'
-                            ? <><span className="animate-spin inline-block">⏳</span> Xử lý...</>
-                            : <>▶ Phân tích</>}
-                        </Button>
-                      </div>
-                      {analyzeMessage && (
-                        <p className={`text-xs px-2 py-1.5 rounded-md ${
-                          analyzeStatus === 'done' ? 'text-green-700 bg-green-50 dark:bg-green-950 dark:text-green-300' :
-                          analyzeStatus === 'error' ? 'text-red-700 bg-red-50 dark:bg-red-950 dark:text-red-300' :
-                          'text-blue-700 bg-blue-50 dark:bg-blue-950 dark:text-blue-300'
-                        }`}>
-                          {analyzeMessage}
+              {/* Video fields - only show when type is VIDEO */}
+              {lessonForm.type === 'VIDEO' && (
+                <div className="border rounded-lg overflow-hidden bg-blue-50 dark:bg-blue-950/30">
+                  {/* Header */}
+                  <div className="px-3 py-2 flex items-center gap-2 border-b border-blue-100 dark:border-blue-900">
+                    <Video className="w-3 h-3 text-blue-600" />
+                    <span className="text-xs font-semibold text-blue-700 dark:text-blue-300">Nội dung Video</span>
+                    {!editingLesson && (
+                      <span className="ml-auto text-xs text-amber-600 bg-amber-50 rounded px-1.5 py-0.5">
+                        ⚠ Lưu bài học trước, rồi chỉnh sửa để phân tích
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Tabs */}
+                  <div className="flex border-b border-blue-100 dark:border-blue-900">
+                    <button
+                      onClick={() => setVideoTab('youtube')}
+                      className={`flex-1 py-2 text-xs font-medium flex items-center justify-center gap-1.5 transition-colors ${
+                        videoTab === 'youtube'
+                          ? 'bg-white dark:bg-gray-900 text-red-600 border-b-2 border-red-500'
+                          : 'text-gray-500 hover:text-gray-700 hover:bg-white/50'
+                      }`}
+                    >
+                      ▶ YouTube URL
+                    </button>
+                    <button
+                      onClick={() => setVideoTab('upload')}
+                      className={`flex-1 py-2 text-xs font-medium flex items-center justify-center gap-1.5 transition-colors ${
+                        videoTab === 'upload'
+                          ? 'bg-white dark:bg-gray-900 text-blue-600 border-b-2 border-blue-500'
+                          : 'text-gray-500 hover:text-gray-700 hover:bg-white/50'
+                      }`}
+                    >
+                      ⬆ Upload từ máy
+                    </button>
+                  </div>
+
+                  <div className="p-3 space-y-3">
+                    {/* Tab 1: YouTube */}
+                    {videoTab === 'youtube' && (
+                      <div className="space-y-2">
+                        <p className="text-xs text-gray-500">
+                          Dán URL YouTube → hệ thống tự tải audio, AWS Transcribe, dịch VI, tạo IPA.
                         </p>
-                      )}
-                    </div>
-                  )}
-
-                  {/* Tab 2: Upload from computer */}
-                  {videoTab === 'upload' && (
-                    <div className="space-y-2">
-                      <p className="text-xs text-gray-500">
-                        Upload file video/audio từ máy tính → tự động phân tích transcript.
-                      </p>
-                      <label
-                        className={`flex flex-col items-center justify-center gap-2 border-2 border-dashed rounded-lg p-4 cursor-pointer transition-colors ${
-                          uploadFile
-                            ? 'border-blue-400 bg-blue-50 dark:bg-blue-950'
-                            : 'border-gray-300 hover:border-blue-400 hover:bg-blue-50/50'
-                        }`}
-                      >
-                        <input
-                          type="file"
-                          accept="video/*,audio/*,.mp4,.mp3,.wav,.m4a,.webm,.mov"
-                          className="hidden"
-                          onChange={(e) => {
-                            const f = e.target.files?.[0];
-                            if (f) { setUploadFile(f); setUploadStatus('idle'); setUploadMessage(''); setUploadProgress(0); }
-                          }}
-                          disabled={uploadStatus === 'uploading' || uploadStatus === 'processing'}
-                        />
-                        {uploadFile ? (
-                          <>
-                            <span className="text-2xl">🎬</span>
-                            <p className="text-xs font-medium text-blue-700 text-center">{uploadFile.name}</p>
-                            <p className="text-xs text-gray-400">{(uploadFile.size / 1024 / 1024).toFixed(1)} MB</p>
-                          </>
-                        ) : (
-                          <>
-                            <span className="text-2xl text-gray-300">⬆</span>
-                            <p className="text-xs text-gray-500 text-center">Click để chọn file<br /><span className="text-gray-400">MP4, MP3, WAV, M4A, WebM...</span></p>
-                          </>
+                        <div className="flex gap-2">
+                          <Input
+                            value={youtubeInputUrl}
+                            onChange={(e) => setYoutubeInputUrl(e.target.value)}
+                            placeholder="https://youtube.com/watch?v=..."
+                            className="flex-1 font-mono text-xs bg-white dark:bg-gray-900"
+                            disabled={analyzeStatus === 'submitting' || analyzeStatus === 'processing'}
+                          />
+                          <Button
+                            size="sm"
+                            onClick={() => editingLesson && analyzeYoutube(editingLesson.id)}
+                            disabled={!youtubeInputUrl.trim() || !editingLesson || analyzeStatus === 'submitting' || analyzeStatus === 'processing'}
+                            className="flex-shrink-0 bg-red-600 hover:bg-red-700 text-white text-xs gap-1"
+                          >
+                            {analyzeStatus === 'submitting' || analyzeStatus === 'processing'
+                              ? <><span className="animate-spin inline-block">⏳</span> Xử lý...</>
+                              : <>▶ Phân tích</>}
+                          </Button>
+                        </div>
+                        {analyzeMessage && (
+                          <p className={`text-xs px-2 py-1.5 rounded-md ${
+                            analyzeStatus === 'done' ? 'text-green-700 bg-green-50 dark:bg-green-950 dark:text-green-300' :
+                            analyzeStatus === 'error' ? 'text-red-700 bg-red-50 dark:bg-red-950 dark:text-red-300' :
+                            'text-blue-700 bg-blue-50 dark:bg-blue-950 dark:text-blue-300'
+                          }`}>
+                            {analyzeMessage}
+                          </p>
                         )}
-                      </label>
-
-                      {uploadFile && uploadStatus === 'idle' && (
-                        <Button
-                          size="sm"
-                          onClick={() => editingLesson && uploadAndTranscribe(editingLesson.id)}
-                          disabled={!editingLesson}
-                          className="w-full bg-blue-600 hover:bg-blue-700 text-white text-xs gap-1"
-                        >
-                          ⬆ Upload & Phân tích transcript
-                        </Button>
-                      )}
-
-                      {/* Progress bar */}
-                      {(uploadStatus === 'uploading' || uploadStatus === 'processing') && (
-                        <div className="space-y-1">
-                          <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
-                            <div
-                              className="h-full bg-blue-500 transition-all duration-500 rounded-full"
-                              style={{ width: `${uploadProgress}%` }}
-                            />
-                          </div>
-                        </div>
-                      )}
-
-                      {uploadMessage && (
-                        <p className={`text-xs px-2 py-1.5 rounded-md ${
-                          uploadStatus === 'done' ? 'text-green-700 bg-green-50' :
-                          uploadStatus === 'error' ? 'text-red-700 bg-red-50' :
-                          'text-blue-700 bg-blue-50'
-                        }`}>
-                          {uploadMessage}
-                        </p>
-                      )}
-                    </div>
-                  )}
-
-                  {/* Script preview (shared between tabs) */}
-                  {scriptText && (() => {
-                    let count = 0;
-                    try { count = JSON.parse(scriptText).length; } catch { /* ignore */ }
-                    return (
-                      <div className="border-t border-blue-100 dark:border-blue-900 pt-2">
-                        <div className="flex items-center justify-between mb-1">
-                          <span className="text-xs font-medium text-gray-700 dark:text-gray-300">
-                            ✅ Script ({count} câu) — có thể chỉnh sửa thủ công
-                          </span>
-                          <button onClick={() => setScriptText('')} className="text-xs text-red-400 hover:text-red-600">Xóa</button>
-                        </div>
-                        <textarea
-                          value={scriptText}
-                          onChange={(e) => setScriptText(e.target.value)}
-                          className="w-full rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 p-2 text-xs font-mono resize-none"
-                          rows={4}
-                          spellCheck={false}
-                        />
                       </div>
-                    );
-                  })()}
-                </div>
-              </div>
-            )}
+                    )}
 
-            <div className="flex justify-end gap-2 pt-2">
-              <Button variant="outline" onClick={() => setLessonDialog(false)} disabled={saving || savingVideo}>Hủy</Button>
-              <Button onClick={saveLesson} disabled={!lessonForm.title.trim() || saving || savingVideo}>
-                {saving || savingVideo ? 'Đang lưu...' : editingLesson ? 'Cập nhật' : 'Thêm bài học'}
-              </Button>
+                    {/* Tab 2: Upload from computer */}
+                    {videoTab === 'upload' && (
+                      <div className="space-y-2">
+                        <p className="text-xs text-gray-500">
+                          Upload file video/audio từ máy tính → tự động phân tích transcript.
+                        </p>
+                        <label
+                          className={`flex flex-col items-center justify-center gap-2 border-2 border-dashed rounded-lg p-4 cursor-pointer transition-colors ${
+                            uploadFile
+                              ? 'border-blue-400 bg-blue-50 dark:bg-blue-950'
+                              : 'border-gray-300 hover:border-blue-400 hover:bg-blue-50/50'
+                          }`}
+                        >
+                          <input
+                            type="file"
+                            accept="video/*,audio/*,.mp4,.mp3,.wav,.m4a,.webm,.mov"
+                            className="hidden"
+                            onChange={(e) => {
+                              const f = e.target.files?.[0];
+                              if (f) { setUploadFile(f); setUploadStatus('idle'); setUploadMessage(''); setUploadProgress(0); }
+                            }}
+                            disabled={uploadStatus === 'uploading' || uploadStatus === 'processing'}
+                          />
+                          {uploadFile ? (
+                            <>
+                              <span className="text-2xl">🎬</span>
+                              <p className="text-xs font-medium text-blue-700 text-center">{uploadFile.name}</p>
+                              <p className="text-xs text-gray-400">{(uploadFile.size / 1024 / 1024).toFixed(1)} MB</p>
+                            </>
+                          ) : (
+                            <>
+                              <span className="text-2xl text-gray-300">⬆</span>
+                              <p className="text-xs text-gray-500 text-center">Click để chọn file<br /><span className="text-gray-400">MP4, MP3, WAV, M4A, WebM...</span></p>
+                            </>
+                          )}
+                        </label>
+
+                        {uploadFile && uploadStatus === 'idle' && (
+                          <Button
+                            size="sm"
+                            onClick={() => editingLesson && uploadAndTranscribe(editingLesson.id)}
+                            disabled={!editingLesson}
+                            className="w-full bg-blue-600 hover:bg-blue-700 text-white text-xs gap-1"
+                          >
+                            ⬆ Upload & Phân tích transcript
+                          </Button>
+                        )}
+
+                        {/* Progress bar */}
+                        {(uploadStatus === 'uploading' || uploadStatus === 'processing') && (
+                          <div className="space-y-1">
+                            <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
+                              <div
+                                className="h-full bg-blue-500 transition-all duration-500 rounded-full"
+                                style={{ width: `${uploadProgress}%` }}
+                              />
+                            </div>
+                          </div>
+                        )}
+
+                        {uploadMessage && (
+                          <p className={`text-xs px-2 py-1.5 rounded-md ${
+                            uploadStatus === 'done' ? 'text-green-700 bg-green-50' :
+                            uploadStatus === 'error' ? 'text-red-700 bg-red-50' :
+                            'text-blue-700 bg-blue-50'
+                          }`}>
+                            {uploadMessage}
+                          </p>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
+
+            <div className="border border-blue-100 dark:border-blue-900 rounded-lg bg-white/70 dark:bg-gray-900/50 p-3">
+              {scriptText ? (() => {
+                let count = 0;
+                let transcriptItems: any[] = [];
+                try {
+                  transcriptItems = JSON.parse(scriptText);
+                  count = Array.isArray(transcriptItems) ? transcriptItems.length : 0;
+                } catch { /* ignore */ }
+                return (
+                  <div className="h-full flex flex-col">
+                    <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-semibold text-gray-700 dark:text-gray-200">
+                          ✅ Script ({count} câu)
+                        </span>
+                        <span className="text-[11px] text-gray-500">Tự động phân tích & dịch</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className="flex rounded-md border border-gray-200 dark:border-gray-700 overflow-hidden text-xs">
+                          <button
+                            type="button"
+                            onClick={() => setScriptView('preview')}
+                            className={`px-2 py-1 ${scriptView === 'preview' ? 'bg-blue-600 text-white' : 'bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-300'}`}
+                          >
+                            Xem đẹp
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setScriptView('json')}
+                            className={`px-2 py-1 border-l border-gray-200 dark:border-gray-700 ${scriptView === 'json' ? 'bg-blue-600 text-white' : 'bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-300'}`}
+                          >
+                            JSON
+                          </button>
+                        </div>
+                        <button
+                          onClick={() => setScriptText('')}
+                          className="text-xs text-red-400 hover:text-red-600"
+                        >
+                          Xóa
+                        </button>
+                      </div>
+                    </div>
+
+                    {scriptView === 'preview' && (
+                      <div className="space-y-2 max-h-[360px] overflow-y-auto pr-1">
+                        {Array.isArray(transcriptItems) && transcriptItems.length > 0 ? (
+                          transcriptItems.map((item: any, index: number) => (
+                            <div
+                              key={item?.sentenceIndex ?? `${item?.start ?? index}-${index}`}
+                              className="rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-2"
+                            >
+                              <div className="flex flex-wrap items-center gap-2 text-[11px] text-gray-500 dark:text-gray-400">
+                                <span className="px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-300">
+                                  Câu {item?.sentenceIndex ?? index + 1}
+                                </span>
+                                <span>{item?.start ?? 0}ms → {item?.end ?? 0}ms</span>
+                              </div>
+                              <div className="mt-1 text-sm font-semibold text-gray-800 dark:text-gray-100">
+                                {item?.text ?? ''}
+                              </div>
+                              {item?.viText && (
+                                <div className="mt-1 text-xs text-gray-600 dark:text-gray-300">
+                                  {item?.viText}
+                                </div>
+                              )}
+                              {item?.ipa && (
+                                <div className="mt-1 text-[11px] text-gray-500 italic">
+                                  /{item.ipa}/
+                                </div>
+                              )}
+                            </div>
+                          ))
+                        ) : (
+                          <div className="text-xs text-gray-500">Không đọc được dữ liệu script.</div>
+                        )}
+                      </div>
+                    )}
+
+                    {scriptView === 'json' && (
+                      <textarea
+                        value={scriptText}
+                        onChange={(e) => setScriptText(e.target.value)}
+                        className="w-full rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 p-2 text-xs font-mono resize-none h-[360px]"
+                        spellCheck={false}
+                      />
+                    )}
+                  </div>
+                );
+              })() : (
+                <div className="h-full flex items-center justify-center text-xs text-gray-400">
+                  Script sẽ hiển thị tại đây sau khi phân tích.
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="flex justify-end gap-2 pt-2">
+            <Button variant="outline" onClick={() => setLessonDialog(false)} disabled={saving || savingVideo}>Hủy</Button>
+            <Button onClick={saveLesson} disabled={!lessonForm.title.trim() || saving || savingVideo}>
+              {saving || savingVideo ? 'Đang lưu...' : editingLesson ? 'Cập nhật' : 'Thêm bài học'}
+            </Button>
           </div>
         </DialogContent>
       </Dialog>

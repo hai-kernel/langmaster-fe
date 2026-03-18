@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router';
 import { Button } from '@/app/components/ui/button';
 import { Card } from '@/app/components/ui/card';
 import { Badge } from '@/app/components/ui/badge';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/app/components/ui/dialog';
 import {
   Play,
   Pause,
@@ -171,7 +172,6 @@ export function VideoConversationLesson() {
   const [showScript, setShowScript] = useState(true);
   const [showOverlaySub, setShowOverlaySub] = useState(true); // subtitle overlay trên video
   const [showVI, setShowVI] = useState(true);
-  const [showIPA, setShowIPA] = useState(false);      // sentence IPA: tắt mặc định (tránh trùng với word IPA)
   const [showWordIPA, setShowWordIPA] = useState(true); // word IPA: bật mặc định
   const [playbackRate, setPlaybackRate] = useState(1);
 
@@ -193,6 +193,7 @@ export function VideoConversationLesson() {
   const [lastRecordedAudioUrl, setLastRecordedAudioUrl] = useState<string | null>(null);
   const [lastScoredSentenceIndex, setLastScoredSentenceIndex] = useState<number | null>(null);
   const [recordingForSentenceIndex, setRecordingForSentenceIndex] = useState<number | null>(null);
+  const [showPronunciationDetail, setShowPronunciationDetail] = useState(false);
   const [scoringSentenceIndex, setScoringSentenceIndex] = useState<number | null>(null);
   const [isRecording, setIsRecording] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
@@ -806,18 +807,6 @@ export function VideoConversationLesson() {
           {lesson?.description && <p className="text-sm text-muted-foreground mt-1">{lesson.description}</p>}
         </div>
 
-        {/* ── Toolbar: nền #F8F9FB, một màu active Indigo ── */}
-        {transcript.length > 0 && (
-          <div className="flex flex-wrap items-center gap-2 p-4 rounded-xl border border-border/80 bg-[#F8F9FB] dark:bg-gray-900/50">
-            <span className="text-xs font-medium text-muted-foreground mr-1">Hiển thị:</span>
-            <TogglePill active={showOverlaySub} onClick={() => setShowOverlaySub(v => !v)} label="Subtitle video" />
-            <TogglePill active={showScript} onClick={() => setShowScript(v => !v)} label="Script" />
-            <TogglePill active={showVI} onClick={() => setShowVI(v => !v)} label="Dịch tiếng Việt" />
-            <TogglePill active={showIPA} onClick={() => setShowIPA(v => !v)} label="IPA câu" />
-            <TogglePill active={showWordIPA} onClick={() => setShowWordIPA(v => !v)} label="IPA từng từ" />
-          </div>
-        )}
-
         {/* ── Chế độ thoại theo: Thu âm bình thường | Karaoke + Ẩn/Hiện video ── */}
         {mode === 'shadowing' && transcript.length > 0 && (
           <div className="flex flex-wrap items-center gap-3 p-4 rounded-2xl border border-primary/20 bg-primary/5">
@@ -921,173 +910,202 @@ export function VideoConversationLesson() {
           </Card>
         )}
 
-        {lastResponse && (
-          <Card className="p-4 border border-purple-100 dark:border-gray-700 text-left">
-            <div className="flex items-center justify-between mb-3">
-              <div>
-                <h4 className="font-semibold text-sm">Kết quả chấm phát âm</h4>
-                <p className="text-xs text-muted-foreground">Nghe lại và xem đánh giá</p>
+        {lastResponse && (() => {
+          const d = lastResponse?.data;
+          const overall = d ? overallFromResponse(d) : 0;
+          return (
+            <Card className="p-4 border border-purple-100 dark:border-gray-700 text-left">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <h4 className="font-semibold text-sm">Kết quả chấm phát âm</h4>
+                  <p className="text-xs text-muted-foreground">Điểm tổng quan: <span className="font-semibold">{overall}</span>/100</p>
+                </div>
+                <div className="flex items-center gap-2">
+                  {lastScoredSentenceIndex != null && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="gap-1"
+                      onClick={() => {
+                        if (lastRecordedAudioUrl) URL.revokeObjectURL(lastRecordedAudioUrl);
+                        setLastRecordedAudioUrl(null);
+                        setLastResponse(null);
+                        setLastScoredSentenceIndex(null);
+                        startRecordingForSentence(lastScoredSentenceIndex);
+                      }}
+                    >
+                      <RotateCcw className="h-3.5 w-3.5" />
+                      Thu lại câu này
+                    </Button>
+                  )}
+                  <Button
+                    type="button"
+                    size="sm"
+                    onClick={() => setShowPronunciationDetail(true)}
+                  >
+                    Xem chi tiết kết quả
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      if (lastRecordedAudioUrl) URL.revokeObjectURL(lastRecordedAudioUrl);
+                      setLastRecordedAudioUrl(null);
+                      setLastScoredSentenceIndex(null);
+                      setLastResponse(null);
+                    }}
+                  >
+                    Ẩn
+                  </Button>
+                </div>
               </div>
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={() => {
-                  if (lastRecordedAudioUrl) URL.revokeObjectURL(lastRecordedAudioUrl);
-                  setLastRecordedAudioUrl(null);
-                  setLastScoredSentenceIndex(null);
-                  setLastResponse(null);
-                }}
-              >
+            </Card>
+          );
+        })()}
+
+        <Dialog open={showPronunciationDetail} onOpenChange={setShowPronunciationDetail}>
+          <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto" aria-describedby={undefined}>
+            <DialogHeader>
+              <DialogTitle>Kết quả chấm phát âm</DialogTitle>
+            </DialogHeader>
+            {lastResponse ? (
+              (() => {
+                const d = lastResponse?.data;
+                const overall = d ? overallFromResponse(d) : 0;
+                const tips: string[] = [];
+                if ((d?.pronunciationScore ?? 100) < 70) tips.push('Phát âm: chú ý âm cuối và trọng âm từ.');
+                if ((d?.fluencyScore ?? 100) < 70) tips.push('Độ trôi chảy: nói liền mạch hơn, tránh ngắt quãng dài.');
+                if ((d?.accuracyScore ?? 100) < 70) tips.push('Độ chính xác: nghe lại câu mẫu và bắt chước từng từ.');
+                if (overall >= 80) tips.push('Bạn đọc rất tốt! Giữ phong độ.');
+                return (
+                  <div className="space-y-4">
+                    {lastRecordedAudioUrl && (
+                      <div className="mb-2 p-3 rounded-xl bg-muted/50">
+                        <p className="text-xs font-medium text-muted-foreground mb-2">Nghe lại bản ghi của bạn</p>
+                        <audio controls src={lastRecordedAudioUrl} className="w-full h-9" />
+                      </div>
+                    )}
+
+                    <div className="mb-2 space-y-2">
+                      <div className="flex items-center gap-3 flex-wrap">
+                        <span className="text-lg font-bold text-[#4F46E5]">Điểm tổng quan: {overall}/100</span>
+                      </div>
+                      {tips.length > 0 && (
+                        <div className="rounded-lg border bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800 p-2">
+                          <p className="text-xs font-semibold text-amber-800 dark:text-amber-200 mb-1">Lưu ý</p>
+                          <ul className="text-xs text-amber-700 dark:text-amber-300 list-disc list-inside space-y-0.5">
+                            {tips.map((t, i) => (
+                              <li key={i}>{t}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="grid gap-3 md:grid-cols-2">
+                      <div className="space-y-1">
+                        <p className="text-xs text-muted-foreground">Câu gốc</p>
+                        <p className="text-sm font-medium">{lastResponse?.data?.expectedText || '-'}</p>
+                      </div>
+                      <div className="space-y-1">
+                        <p className="text-xs text-muted-foreground">Nhận diện</p>
+                        <p className="text-sm font-medium">{lastResponse?.data?.recognizedText || '-'}</p>
+                      </div>
+                    </div>
+
+                    <div className="mt-2 grid gap-3 md:grid-cols-5">
+                      {[
+                        { label: 'Phát âm', value: lastResponse?.data?.pronunciationScore },
+                        { label: 'Chính xác', value: lastResponse?.data?.accuracyScore },
+                        { label: 'Trôi chảy', value: lastResponse?.data?.fluencyScore },
+                        { label: 'Ngữ điệu', value: lastResponse?.data?.prosodyScore },
+                        { label: 'Hoàn chỉnh', value: lastResponse?.data?.completenessScore },
+                      ].map((item) => (
+                        <div key={item.label} className="rounded-lg border p-2 text-center">
+                          <div className="text-[11px] text-muted-foreground">{item.label}</div>
+                          <div className="text-lg font-semibold">
+                            {typeof item.value === 'number' ? Math.round(item.value) : '-'}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="mt-2">
+                      <h5 className="text-sm font-semibold mb-2">Phân tích từng từ</h5>
+                      <div className="flex flex-wrap gap-2">
+                        {(lastResponse?.data?.feedback?.Words || []).map((w: any, idx: number) => (
+                          <div
+                            key={`${w.Word}-${idx}`}
+                            className={`px-2 py-1 rounded-md text-xs font-medium ${getAccuracyClasses(w?.PronunciationAssessment?.AccuracyScore)}`}
+                            title={`Accuracy: ${w?.PronunciationAssessment?.AccuracyScore ?? 'N/A'}`}
+                          >
+                            {w.Word}
+                          </div>
+                        ))}
+                        {(!lastResponse?.data?.feedback?.Words || lastResponse?.data?.feedback?.Words.length === 0) && (
+                          <span className="text-xs text-muted-foreground">Không có dữ liệu từ</span>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="mt-2">
+                      <h5 className="text-sm font-semibold mb-2">Chi tiết âm tiết / âm vị</h5>
+                      <div className="space-y-3">
+                        {(lastResponse?.data?.feedback?.Words || []).map((w: any, idx: number) => (
+                          <div key={`${w.Word}-${idx}`} className="rounded-lg border p-3">
+                            <div className="flex items-center justify-between mb-2">
+                              <span className="text-sm font-semibold">{w.Word}</span>
+                              <span className="text-xs text-muted-foreground">Độ chính xác: {w?.PronunciationAssessment?.AccuracyScore ?? '-'}</span>
+                            </div>
+                            {Array.isArray(w?.Syllables) && w.Syllables.length > 0 && (
+                              <div className="mb-2">
+                                <p className="text-xs text-muted-foreground mb-1">Âm tiết</p>
+                                <div className="flex flex-wrap gap-2">
+                                  {w.Syllables.map((s: any, sIdx: number) => (
+                                    <span
+                                      key={`${w.Word}-s-${sIdx}`}
+                                      className={`px-2 py-1 rounded text-xs ${getAccuracyClasses(s?.PronunciationAssessment?.AccuracyScore)}`}
+                                    >
+                                      {s.Syllable} ({s?.PronunciationAssessment?.AccuracyScore ?? '-'})
+                                    </span>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                            {Array.isArray(w?.Phonemes) && w.Phonemes.length > 0 && (
+                              <div>
+                                <p className="text-xs text-muted-foreground mb-1">Âm vị</p>
+                                <div className="flex flex-wrap gap-2">
+                                  {w.Phonemes.map((p: any, pIdx: number) => (
+                                    <span
+                                      key={`${w.Word}-p-${pIdx}`}
+                                      className={`px-2 py-1 rounded text-xs ${getAccuracyClasses(p?.PronunciationAssessment?.AccuracyScore)}`}
+                                    >
+                                      {p.Phoneme} ({p?.PronunciationAssessment?.AccuracyScore ?? '-'})
+                                    </span>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()
+            ) : (
+              <div className="text-sm text-muted-foreground">Chưa có dữ liệu.</div>
+            )}
+            <DialogFooter className="pt-2">
+              <Button variant="outline" onClick={() => setShowPronunciationDetail(false)}>
                 Đóng
               </Button>
-            </div>
-
-            {/* Nghe lại bản ghi vừa thu */}
-            {lastRecordedAudioUrl && (
-              <div className="mb-4 p-3 rounded-xl bg-muted/50">
-                <p className="text-xs font-medium text-muted-foreground mb-2">Nghe lại bản ghi của bạn</p>
-                <audio controls src={lastRecordedAudioUrl} className="w-full h-9" />
-              </div>
-            )}
-
-            {/* Đánh giá tổng quan + Lưu ý */}
-            {(() => {
-              const d = lastResponse?.data;
-              const overall = d ? overallFromResponse(d) : 0;
-              const tips: string[] = [];
-              if ((d?.pronunciationScore ?? 100) < 70) tips.push('Phát âm: chú ý âm cuối và trọng âm từ.');
-              if ((d?.fluencyScore ?? 100) < 70) tips.push('Độ trôi chảy: nói liền mạch hơn, tránh ngắt quãng dài.');
-              if ((d?.accuracyScore ?? 100) < 70) tips.push('Độ chính xác: nghe lại câu mẫu và bắt chước từng từ.');
-              if (overall >= 80) tips.push('Bạn đọc rất tốt! Giữ phong độ.');
-              return (
-                <div className="mb-4 space-y-2">
-                  <div className="flex items-center gap-3 flex-wrap">
-                    <span className="text-lg font-bold text-[#4F46E5]">Điểm tổng quan: {overall}/100</span>
-                    {lastScoredSentenceIndex != null && (
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        className="gap-1"
-                        onClick={() => {
-                          if (lastRecordedAudioUrl) URL.revokeObjectURL(lastRecordedAudioUrl);
-                          setLastRecordedAudioUrl(null);
-                          setLastResponse(null);
-                          setLastScoredSentenceIndex(null);
-                          startRecordingForSentence(lastScoredSentenceIndex);
-                        }}
-                      >
-                        <RotateCcw className="h-3.5 w-3.5" />
-                        Thu lại câu này
-                      </Button>
-                    )}
-                  </div>
-                  {tips.length > 0 && (
-                    <div className="rounded-lg border bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800 p-2">
-                      <p className="text-xs font-semibold text-amber-800 dark:text-amber-200 mb-1">Lưu ý</p>
-                      <ul className="text-xs text-amber-700 dark:text-amber-300 list-disc list-inside space-y-0.5">
-                        {tips.map((t, i) => (
-                          <li key={i}>{t}</li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-                </div>
-              );
-            })()}
-
-            <div className="grid gap-3 md:grid-cols-2">
-              <div className="space-y-1">
-                <p className="text-xs text-muted-foreground">Câu gốc</p>
-                <p className="text-sm font-medium">{lastResponse?.data?.expectedText || '-'}</p>
-              </div>
-              <div className="space-y-1">
-                <p className="text-xs text-muted-foreground">Nhận diện</p>
-                <p className="text-sm font-medium">{lastResponse?.data?.recognizedText || '-'}</p>
-              </div>
-            </div>
-
-            <div className="mt-3 grid gap-3 md:grid-cols-5">
-              {[
-                { label: 'Pron', value: lastResponse?.data?.pronunciationScore },
-                { label: 'Acc', value: lastResponse?.data?.accuracyScore },
-                { label: 'Fluency', value: lastResponse?.data?.fluencyScore },
-                { label: 'Prosody', value: lastResponse?.data?.prosodyScore },
-                { label: 'Complete', value: lastResponse?.data?.completenessScore },
-              ].map((item) => (
-                <div key={item.label} className="rounded-lg border p-2 text-center">
-                  <div className="text-[11px] text-muted-foreground">{item.label}</div>
-                  <div className="text-lg font-semibold">
-                    {typeof item.value === 'number' ? Math.round(item.value) : '-'}
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            <div className="mt-4">
-              <h5 className="text-sm font-semibold mb-2">Phân tích từng từ</h5>
-              <div className="flex flex-wrap gap-2">
-                {(lastResponse?.data?.feedback?.Words || []).map((w: any, idx: number) => (
-                  <div
-                    key={`${w.Word}-${idx}`}
-                    className={`px-2 py-1 rounded-md text-xs font-medium ${getAccuracyClasses(w?.PronunciationAssessment?.AccuracyScore)}`}
-                    title={`Accuracy: ${w?.PronunciationAssessment?.AccuracyScore ?? 'N/A'}`}
-                  >
-                    {w.Word}
-                  </div>
-                ))}
-                {(!lastResponse?.data?.feedback?.Words || lastResponse?.data?.feedback?.Words.length === 0) && (
-                  <span className="text-xs text-muted-foreground">Không có dữ liệu từ</span>
-                )}
-              </div>
-            </div>
-
-            <div className="mt-4">
-              <h5 className="text-sm font-semibold mb-2">Chi tiết âm tiết / âm vị</h5>
-              <div className="space-y-3">
-                {(lastResponse?.data?.feedback?.Words || []).map((w: any, idx: number) => (
-                  <div key={`${w.Word}-${idx}`} className="rounded-lg border p-3">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm font-semibold">{w.Word}</span>
-                      <span className="text-xs text-muted-foreground">Accuracy: {w?.PronunciationAssessment?.AccuracyScore ?? '-'}</span>
-                    </div>
-                    {Array.isArray(w?.Syllables) && w.Syllables.length > 0 && (
-                      <div className="mb-2">
-                        <p className="text-xs text-muted-foreground mb-1">Syllables</p>
-                        <div className="flex flex-wrap gap-2">
-                          {w.Syllables.map((s: any, sIdx: number) => (
-                            <span
-                              key={`${w.Word}-s-${sIdx}`}
-                              className={`px-2 py-1 rounded text-xs ${getAccuracyClasses(s?.PronunciationAssessment?.AccuracyScore)}`}
-                            >
-                              {s.Syllable} ({s?.PronunciationAssessment?.AccuracyScore ?? '-'})
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                    {Array.isArray(w?.Phonemes) && w.Phonemes.length > 0 && (
-                      <div>
-                        <p className="text-xs text-muted-foreground mb-1">Phonemes</p>
-                        <div className="flex flex-wrap gap-2">
-                          {w.Phonemes.map((p: any, pIdx: number) => (
-                            <span
-                              key={`${w.Word}-p-${pIdx}`}
-                              className={`px-2 py-1 rounded text-xs ${getAccuracyClasses(p?.PronunciationAssessment?.AccuracyScore)}`}
-                            >
-                              {p.Phoneme} ({p?.PronunciationAssessment?.AccuracyScore ?? '-'})
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
-          </Card>
-        )}
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
 
         {/* ── Kết quả Karaoke: tổng hợp gọn gàng + gợi ý cải thiện ── */}
         {karaokeSummaryVisible && Object.keys(karaokeResults).length > 0 && (() => {
@@ -1315,9 +1333,6 @@ export function VideoConversationLesson() {
                         <p className="text-white text-lg font-medium">{currentLine.text}</p>
                       )}
                       {/* IPA câu */}
-                      {showIPA && currentLine.ipa && !showWordIPA && (
-                        <p className="text-green-300 text-sm font-mono mt-1">{currentLine.ipa}</p>
-                      )}
                       {/* Dịch */}
                       {showVI && currentLine.viText && (
                         <p className="text-yellow-300 text-sm mt-1">{currentLine.viText}</p>
@@ -1407,10 +1422,20 @@ export function VideoConversationLesson() {
           {showScript && transcript.length > 0 && (
             <div className="lg:col-span-2">
               <Card className="flex flex-col h-full rounded-2xl border bg-card shadow-sm overflow-hidden">
-                <div className="p-3 border-b bg-muted/30 flex items-center gap-2 flex-shrink-0">
-                  <AlignLeft className="w-4 h-4 text-primary" />
-                  <h3 className="font-semibold text-sm">Script</h3>
-                  <span className="text-xs text-muted-foreground ml-auto">{transcript.length} câu</span>
+                <div className="border-b bg-white/80 dark:bg-gray-900/60 backdrop-blur">
+                  <div className="p-3 flex items-center gap-2">
+                    <AlignLeft className="w-4 h-4 text-primary" />
+                    <h3 className="font-semibold text-sm">Script</h3>
+                    <span className="text-xs text-muted-foreground ml-auto">{transcript.length} câu</span>
+                  </div>
+                  <div className="px-3 pb-3">
+                    <div className="flex items-center gap-2 rounded-xl border border-indigo-100/80 dark:border-indigo-900/60 bg-gradient-to-r from-indigo-50 via-white to-indigo-50 dark:from-indigo-950/40 dark:via-gray-900 dark:to-indigo-950/40 px-2.5 py-2 overflow-x-auto">
+                      <TogglePill active={showOverlaySub} onClick={() => setShowOverlaySub(v => !v)} label="Subtitle video" />
+                      <TogglePill active={showScript} onClick={() => setShowScript(v => !v)} label="Script" />
+                      <TogglePill active={showVI} onClick={() => setShowVI(v => !v)} label="Dịch tiếng Việt" />
+                      <TogglePill active={showWordIPA} onClick={() => setShowWordIPA(v => !v)} label="IPA từng từ" />
+                    </div>
+                  </div>
                 </div>
 
                 <div ref={scriptRef} className="flex-1 overflow-y-auto divide-y divide-border" style={{ maxHeight: '480px' }}>
@@ -1479,11 +1504,6 @@ export function VideoConversationLesson() {
                             )}
 
                             {/* IPA câu (khi không dùng word IPA) */}
-                            {showIPA && !showWordIPA && line.ipa && (
-                              <p className="text-xs text-green-600 dark:text-green-400 font-mono leading-tight">
-                                /{line.ipa}/
-                              </p>
-                            )}
 
                             {/* Dịch tiếng Việt */}
                             {showVI && line.viText && (

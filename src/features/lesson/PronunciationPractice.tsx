@@ -4,6 +4,7 @@ import { Card } from '@/app/components/ui/card';
 import { Button } from '@/app/components/ui/button';
 import { Badge } from '@/app/components/ui/badge';
 import { Progress } from '@/app/components/ui/progress';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/app/components/ui/dialog';
 import { ConfettiCelebration } from '@/shared/ui/ConfettiCelebration';
 import { RecordingButton } from '@/shared/ui/RecordingButton';
 import { LoadingSpinner, SuccessCheckmark, ScaleButton } from '@/shared/ui/AnimationComponents';
@@ -93,6 +94,8 @@ export function PronunciationPractice() {
   const [hasRecorded, setHasRecorded] = useState(false);
   const [analysisResult, setAnalysisResult] = useState<PronunciationResult | null>(null);
   const [showResult, setShowResult] = useState(false);
+  const [showResultModal, setShowResultModal] = useState(false);
+  const [recordedAudioUrl, setRecordedAudioUrl] = useState<string | null>(null);
   const [lastResponse, setLastResponse] = useState<any>(null);
   const recordingTimerRef = useRef<NodeJS.Timeout | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
@@ -164,6 +167,8 @@ export function PronunciationPractice() {
     setRecordingTime(0);
     setHasRecorded(false);
     setShowResult(false);
+    setShowResultModal(false);
+    setRecordedAudioUrl(null);
     setAnalysisResult(null);
     chunksRef.current = [];
     try {
@@ -191,6 +196,8 @@ export function PronunciationPractice() {
           return;
         }
         const blob = new Blob(chunksRef.current, { type: mr.mimeType || 'audio/wav' });
+        const audioUrl = URL.createObjectURL(blob);
+        setRecordedAudioUrl(audioUrl);
         try {
           const res = await apiService.pronunciation.getScore(Number(lid), idx, blob);
           const d = res.data?.data;
@@ -240,9 +247,11 @@ export function PronunciationPractice() {
       setRecordingTime(0);
       setHasRecorded(false);
       setShowResult(false);
+      setShowResultModal(false);
+      setRecordedAudioUrl(null);
       setAnalysisResult(null);
     } else {
-      toast.info('Đã chấm xong. Bạn có thể xem chi tiết kết quả ngay bên dưới.');
+      toast.info('Đã chấm xong. Bạn có thể xem chi tiết kết quả.');
     }
   };
 
@@ -250,6 +259,8 @@ export function PronunciationPractice() {
     setRecordingTime(0);
     setHasRecorded(false);
     setShowResult(false);
+    setShowResultModal(false);
+    setRecordedAudioUrl(null);
     setAnalysisResult(null);
   };
 
@@ -303,12 +314,140 @@ export function PronunciationPractice() {
           </Badge>
         </div>
 
+        <Dialog open={showResultModal} onOpenChange={setShowResultModal}>
+          <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto" aria-describedby={undefined}>
+            <DialogHeader>
+              <DialogTitle>Kết quả chấm phát âm</DialogTitle>
+            </DialogHeader>
+            {analysisResult ? (
+              <div className="space-y-4">
+                {recordedAudioUrl && (
+                  <div className="rounded-lg border border-gray-200 dark:border-gray-700 p-3">
+                    <p className="text-sm font-medium mb-2">Nghe lại bản ghi của bạn</p>
+                    <audio controls className="w-full" src={recordedAudioUrl} />
+                  </div>
+                )}
+
+                <Card className={`p-5 ${getScoreBg(analysisResult.score.overall)}`}>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h2 className="text-lg font-bold mb-1">Điểm tổng quan</h2>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                        {analysisResult.score.overall >= 90 ? 'Xuất sắc!' :
+                         analysisResult.score.overall >= 75 ? 'Tốt!' :
+                         'Cần cải thiện'}
+                      </p>
+                    </div>
+                    <div className="text-center">
+                      <div className={`text-4xl font-bold ${getScoreColor(analysisResult.score.overall)}`}>
+                        {analysisResult.score.overall}
+                      </div>
+                      <Trophy className={`h-7 w-7 mx-auto mt-2 ${getScoreColor(analysisResult.score.overall)}`} />
+                    </div>
+                  </div>
+                </Card>
+
+                <Card className="p-5">
+                  <h3 className="mb-4 font-bold text-lg">Chi tiết đánh giá</h3>
+                  <div className="grid gap-4 md:grid-cols-2">
+                    {[
+                      { label: 'Phát âm', score: analysisResult.score.pronunciation, icon: Mic },
+                      { label: 'Độ trôi chảy', score: analysisResult.score.fluency, icon: TrendingUp },
+                      { label: 'Ngữ điệu', score: analysisResult.score.intonation, icon: Volume2 },
+                      { label: 'Độ chính xác', score: analysisResult.score.accuracy, icon: CheckCircle },
+                    ].map((item) => (
+                      <div key={item.label} className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <item.icon className="h-4 w-4 text-gray-600 dark:text-gray-400" />
+                            <span className="text-sm font-medium">{item.label}</span>
+                          </div>
+                          <span className={`font-bold ${getScoreColor(item.score)}`}>
+                            {item.score}
+                          </span>
+                        </div>
+                        <Progress value={item.score} className="h-2" />
+                      </div>
+                    ))}
+                  </div>
+                </Card>
+
+                <Card className="p-5">
+                  <h3 className="mb-4 font-bold text-lg">Phân tích từng từ</h3>
+                  <div className="flex flex-wrap gap-2">
+                    {analysisResult.wordAnalysis.map((word, index) => (
+                      <div
+                        key={index}
+                        className={`flex items-center gap-2 rounded-lg px-3 py-2 ${
+                          word.isCorrect
+                            ? 'bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-400'
+                            : 'bg-yellow-100 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-400'
+                        }`}
+                      >
+                        {word.isCorrect ? (
+                          <CheckCircle className="h-4 w-4" />
+                        ) : (
+                          <AlertCircle className="h-4 w-4" />
+                        )}
+                        <span className="font-medium">{word.word}</span>
+                        <Badge variant="outline" className="text-xs">
+                          {word.score}
+                        </Badge>
+                      </div>
+                    ))}
+                  </div>
+                </Card>
+
+                <div className="grid gap-4 md:grid-cols-2">
+                  {analysisResult.strengths.length > 0 && (
+                    <Card className="p-4 bg-green-50 dark:bg-green-900/10 border-green-200 dark:border-green-800">
+                      <h4 className="mb-2 font-bold flex items-center gap-2 text-green-700 dark:text-green-400">
+                        <CheckCircle className="h-5 w-5" />
+                        Điểm mạnh
+                      </h4>
+                      <ul className="space-y-1 text-sm">
+                        {analysisResult.strengths.map((strength, index) => (
+                          <li key={index} className="text-green-700 dark:text-green-400">
+                            • {strength}
+                          </li>
+                        ))}
+                      </ul>
+                    </Card>
+                  )}
+
+                  {analysisResult.suggestions.length > 0 && (
+                    <Card className="p-4 bg-blue-50 dark:bg-blue-900/10 border-blue-200 dark:border-blue-800">
+                      <h4 className="mb-2 font-bold flex items-center gap-2 text-blue-700 dark:text-blue-400">
+                        <TrendingUp className="h-5 w-5" />
+                        Gợi ý cải thiện
+                      </h4>
+                      <ul className="space-y-1 text-sm">
+                        {analysisResult.suggestions.map((suggestion, index) => (
+                          <li key={index} className="text-blue-700 dark:text-blue-400">
+                            • {suggestion}
+                          </li>
+                        ))}
+                      </ul>
+                    </Card>
+                  )}
+                </div>
+              </div>
+            ) : (
+              <div className="text-sm text-gray-500">Chưa có dữ liệu kết quả.</div>
+            )}
+            <DialogFooter className="pt-2">
+              <Button variant="outline" onClick={() => setShowResultModal(false)}>
+                Đóng
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
         >
-          {/* Title */}
           <div className="mb-6">
             <h1 className="mb-2 text-3xl font-bold">{lesson.title}</h1>
             <p className="text-gray-600 dark:text-gray-400 mb-4">{lesson.description}</p>
@@ -401,146 +540,33 @@ export function PronunciationPractice() {
             </div>
           </Card>
 
-          {/* Results */}
-          <AnimatePresence>
-            {showResult && analysisResult && (
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
-                className="space-y-4"
-              >
-                {/* Overall Score */}
-                <Card className={`p-6 ${getScoreBg(analysisResult.score.overall)}`}>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h2 className="text-lg font-bold mb-1">Điểm tổng quan</h2>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">
-                        {analysisResult.score.overall >= 90 ? 'Xuất sắc!' : 
-                         analysisResult.score.overall >= 75 ? 'Tốt!' : 
-                         'Cần cải thiện'}
-                      </p>
-                    </div>
-                    <div className="text-center">
-                      <motion.div
-                        initial={{ scale: 0 }}
-                        animate={{ scale: 1 }}
-                        transition={{ type: 'spring', stiffness: 200 }}
-                        className={`text-5xl font-bold ${getScoreColor(analysisResult.score.overall)}`}
-                      >
-                        {analysisResult.score.overall}
-                      </motion.div>
-                      <Trophy className={`h-8 w-8 mx-auto mt-2 ${getScoreColor(analysisResult.score.overall)}`} />
-                    </div>
-                  </div>
-                </Card>
-
-                {/* Detailed Scores */}
-                <Card className="p-6">
-                  <h3 className="mb-4 font-bold text-lg">Chi tiết đánh giá</h3>
-                  <div className="grid gap-4 md:grid-cols-2">
-                    {[
-                      { label: 'Phát âm', score: analysisResult.score.pronunciation, icon: Mic },
-                      { label: 'Độ trôi chảy', score: analysisResult.score.fluency, icon: TrendingUp },
-                      { label: 'Ngữ điệu', score: analysisResult.score.intonation, icon: Volume2 },
-                      { label: 'Độ chính xác', score: analysisResult.score.accuracy, icon: CheckCircle },
-                    ].map((item) => (
-                      <div key={item.label} className="space-y-2">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2">
-                            <item.icon className="h-4 w-4 text-gray-600 dark:text-gray-400" />
-                            <span className="text-sm font-medium">{item.label}</span>
-                          </div>
-                          <span className={`font-bold ${getScoreColor(item.score)}`}>
-                            {item.score}
-                          </span>
-                        </div>
-                        <Progress value={item.score} className="h-2" />
-                      </div>
-                    ))}
-                  </div>
-                </Card>
-
-                {/* Word Analysis */}
-                <Card className="p-6">
-                  <h3 className="mb-4 font-bold text-lg">Phân tích từng từ</h3>
-                  <div className="flex flex-wrap gap-2">
-                    {analysisResult.wordAnalysis.map((word, index) => (
-                      <motion.div
-                        key={index}
-                        initial={{ opacity: 0, scale: 0.8 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        transition={{ delay: index * 0.1 }}
-                        className={`flex items-center gap-2 rounded-lg px-3 py-2 ${
-                          word.isCorrect
-                            ? 'bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-400'
-                            : 'bg-yellow-100 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-400'
-                        }`}
-                      >
-                        {word.isCorrect ? (
-                          <CheckCircle className="h-4 w-4" />
-                        ) : (
-                          <AlertCircle className="h-4 w-4" />
-                        )}
-                        <span className="font-medium">{word.word}</span>
-                        <Badge variant="outline" className="text-xs">
-                          {word.score}
-                        </Badge>
-                      </motion.div>
-                    ))}
-                  </div>
-                </Card>
-
-                {/* Feedback */}
-                <div className="grid gap-4 md:grid-cols-2">
-                  {/* Strengths */}
-                  {analysisResult.strengths.length > 0 && (
-                    <Card className="p-4 bg-green-50 dark:bg-green-900/10 border-green-200 dark:border-green-800">
-                      <h4 className="mb-2 font-bold flex items-center gap-2 text-green-700 dark:text-green-400">
-                        <CheckCircle className="h-5 w-5" />
-                        Điểm mạnh
-                      </h4>
-                      <ul className="space-y-1 text-sm">
-                        {analysisResult.strengths.map((strength, index) => (
-                          <li key={index} className="text-green-700 dark:text-green-400">
-                            • {strength}
-                          </li>
-                        ))}
-                      </ul>
-                    </Card>
-                  )}
-
-                  {/* Suggestions */}
-                  {analysisResult.suggestions.length > 0 && (
-                    <Card className="p-4 bg-blue-50 dark:bg-blue-900/10 border-blue-200 dark:border-blue-800">
-                      <h4 className="mb-2 font-bold flex items-center gap-2 text-blue-700 dark:text-blue-400">
-                        <TrendingUp className="h-5 w-5" />
-                        Gợi ý cải thiện
-                      </h4>
-                      <ul className="space-y-1 text-sm">
-                        {analysisResult.suggestions.map((suggestion, index) => (
-                          <li key={index} className="text-blue-700 dark:text-blue-400">
-                            • {suggestion}
-                          </li>
-                        ))}
-                      </ul>
-                    </Card>
-                  )}
+          {showResult && analysisResult && (
+            <Card className="p-5">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <p className="text-sm text-gray-500">Kết quả chấm phát âm</p>
+                  <p className="text-xl font-bold">
+                    Điểm tổng quan: <span className={getScoreColor(analysisResult.score.overall)}>{analysisResult.score.overall}</span>/100
+                  </p>
                 </div>
-
-                {/* Action Buttons */}
-                <div className="flex gap-3">
+                <div className="flex flex-wrap gap-2">
                   <Button
                     variant="outline"
                     onClick={handleRetry}
-                    className="flex-1 gap-2"
+                    className="gap-2"
                   >
                     <RotateCcw className="h-4 w-4" />
-                    Thử lại
+                    Thu lại câu này
+                  </Button>
+                  <Button
+                    onClick={() => setShowResultModal(true)}
+                    className="gap-2"
+                  >
+                    Xem chi tiết kết quả
                   </Button>
                   <Button
                     onClick={handleNextPhrase}
-                    className="flex-1 gap-2 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600"
+                    className="gap-2 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600"
                   >
                     {currentPhraseIndex < totalPhrases - 1 ? (
                       <>
@@ -555,9 +581,9 @@ export function PronunciationPractice() {
                     )}
                   </Button>
                 </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
+              </div>
+            </Card>
+          )}
         </motion.div>
       </div>
     </div>
